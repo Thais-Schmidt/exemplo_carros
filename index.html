@@ -1,0 +1,266 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Manipulaçao de dados</title>
+</head>
+
+<body>
+
+    <!-- CSS -->
+
+    <style>
+
+        html{
+            font-family: Century Gothic, CenturyGothic, AppleGothic, sans-serif;
+        }
+
+        table, td, th{
+            border: 1px solid;
+            padding: 10px;
+        }
+
+        th{
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        th{
+            background-color:gainsboro;
+        }
+
+        tr{
+            border: 1px solid;
+            text-align: left;
+        }
+
+        td{
+            border: 1px solid;
+            width: auto;
+            text-align: left;
+            vertical-align: top;
+        }
+
+        h2{
+            color: #4682b4;
+        }
+
+        hr{
+            color: #e37405;
+            border: 1px solid;
+        }
+
+        #lado{
+            display: flex;
+            justify-content: center;
+        }
+
+
+    </style>
+
+    <!-- HTML -->
+
+    <h2>Leitura de xml com Javascript puro:</h2>
+    <table id="tbl1">
+
+    </table>
+
+    <br>
+
+    <hr>
+
+    <H2>Leitura de xml com JavascripT / JQuery:</H2>
+
+    <table id="tbl2">
+
+    </table>
+
+    <br>
+    
+    <hr>
+
+    <div id="lado">
+
+        <canvas id="myChart" style="width: 100%; max-width: 500px;">
+
+        </canvas>
+    
+        <canvas id="myChartCarros" style="width: 100%; max-width: 500px;">
+    
+        </canvas>
+    
+
+    </div>
+
+    
+    <script src="jquery-3.7.1.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.9.4/Chart.js"></script>
+
+    <!-- JAVASCRIPT -->
+
+    <script>
+
+        //tbl1
+
+        function loadXMLDoc() { //vai fazer a conexao com o servidor verificando se esta disponivel (===4) e o status
+            var xmlDoc = new XMLHttpRequest(); // XMLHttpRequest serve para interar com servidores;
+            xmlDoc.onreadystatechange = function () {
+                if (this.readyState === 4 && this.status === 200) { //(this) 
+                    leituraArquivo(this); 
+                }
+            }
+
+            xmlDoc.open("GET", "dados/carros.xml"); // solicita 
+            xmlDoc.send(); // envia 
+
+        }        
+
+        function leituraArquivo(xml) {
+            var i;
+            var xmlArquivo = xml.responseXML;
+            console.log(xml);
+            var arquivo = xmlArquivo.getElementsByTagName("veiculo");
+            var table =
+                `<tr>
+                    <th> Marca: </th>
+                    <th> Modelo: </th> 
+                    <th> Ano: </th> 
+                    <th> Cor: </th> 
+                    <th> Placa: </th> 
+                    <th> Quantidade: </th> 
+                </tr>`;
+
+            for (i = 0; i < arquivo.length; i++){
+                //A propriedade nodeValue retorna o valor de um no 
+                //Para retornar o texto de um elemento e necessario retornar o valor de 
+                //no (element.childNodes[0].nodeValue)
+                table +=
+                    `<tr>
+                        <td>${arquivo[i].getElementsByTagName("marca")[0].childNodes[0].nodeValue}</td>
+                        <td>${arquivo[i].getElementsByTagName("modelo")[0].childNodes[0].nodeValue}</td>
+                        <td>${arquivo[i].getElementsByTagName("ano")[0].childNodes[0].nodeValue}</td>
+                        <td>${arquivo[i].getElementsByTagName("cor")[0].childNodes[0].nodeValue}</td>
+                        <td>${arquivo[i].getElementsByTagName("placa")[0].childNodes[0].nodeValue}</td>
+                        <td>${arquivo[i].getElementsByTagName("quantidade")[0].childNodes[0].nodeValue}</td>
+                    </tr>`
+            }
+
+            document.getElementById('tbl1').innerHTML = table;
+        }
+
+        loadXMLDoc();
+
+        //fim do tbl1
+
+        //inicio do tbl2 - LEITURA DE XML UTILIZANDO JQUERY
+
+        let arrX = []; //Aqui estao sendo criados dois arrays, sem nenhum valor
+        let arrY = [];
+
+        var table =
+                `<tr>
+                    <th> Marca: </th>
+                    <th> Modelo: </th> 
+                    <th> Ano: </th> 
+                    <th> Cor: </th> 
+                    <th> Placa: </th> 
+                    <th> Quantidade: </th> 
+                </tr>`;
+
+        let url = "dados/carros.xml";
+
+        $.ajax(url)
+            .done(function(carros){
+                $(carros).find('veiculo').each(function(){
+                    table +=
+                    `<tr> 
+                        <td>${$(this).find('marca').text()}</td>  
+                        <td>${$(this).find('modelo').text()}</td>
+                        <td>${$(this).find('ano').text()}</td>
+                        <td>${$(this).find('cor').text()}</td>
+                        <td>${$(this).find('placa').text()}</td>
+                        <td>${$(this).find('quantidade').text()}</td>  
+                    </tr>`
+
+                    arrX.push($(this).find('modelo').text()); // a partir daqui estamos adicionando valores ao array (usando o push) a partir da tag modelo (que ja esta dentro do for)
+                    arrY.push($(this).find('quantidade').text());
+                    
+                })
+                novoGrafico(arrX, arrY); //aqui estamos definindo que a funçao novoGrafico que foi criada la embaixo do codigo, deve receber dois parametros (neste caso, os itens obtidos a partir dos arrays arrX, arrY)
+                document.getElementById('tbl2').innerHTML = table                
+            })
+            .fail(function(){
+                alert("Ocorreu um erro na leitura do arquivo XML.");
+            })
+
+        //inicio do Chart 
+
+        var xValues=["Italia", "França", "Espanha", "Estados Unidos", "Argentina"];
+        var yValues=[55,49,44,24,15];
+        var barColors=[
+            "#b91b47",
+            "#00aba9",
+            "#2b5797",
+            "#e8c3b9",
+            "#1e7145",
+        ];
+        new Chart("myChart", {
+            type: "pie",
+            data:{
+                labels: xValues,
+                datasets: [{
+                    backgroundColor:barColors,
+                    data:yValues
+                }]
+            },
+            options:{
+                title:{
+                    display:true,
+                    text:"Produçao de vinho - 2018"
+                }
+            }
+        });
+
+        //fim do Chart
+
+        //segundo Chart
+
+        function novoGrafico(xC, yQ){ //neste ponto, os parametros da funçao podem ter qualquer nome
+
+            var xCarros = xC; //estamos usando o xC que equivale ao array = arrX que contem os nomes dos modelos de carro
+            var yQuantidade = yQ; //aqui a mesma coisa, porem relacionado as quantidades
+            var barColors2=[
+                "#b91b47",
+                "#00aba9",
+                "#2b5797",
+                "#e8c3b9",
+                "#1e7145",
+            ];
+
+            new Chart("myChartCarros", {
+                type: "pie",
+                data:{
+                    labels: xCarros,
+                    datasets:[{
+                        backgroundColor:barColors2,
+                        data:yQuantidade
+                    }]
+                },
+                options:{
+                    title:{
+                        display:true,
+                        text:"Exercicio dos carros"
+                    }
+                }
+            });
+        }
+
+        //fim do segundo Chart
+
+
+    </script>
+
+</body>
+</html>
